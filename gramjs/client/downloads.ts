@@ -85,6 +85,7 @@ export interface DownloadFileParamsV2 {
 export interface DownloadProfilePhotoParams {
     /** Whether to download the big version or the small one of the photo */
     isBig?: boolean;
+    outputFile?: OutFile;
 }
 
 interface Deferred {
@@ -127,7 +128,7 @@ export interface IterDownloadFunction {
     msgData?: [EntityLike, number];
 }
 
-class DirectDownloadIter extends RequestIter {
+export class DirectDownloadIter extends RequestIter {
     protected request?: Api.upload.GetFile;
     private _sender?: MTProtoSender;
     private _timedOut: boolean = false;
@@ -225,7 +226,7 @@ class DirectDownloadIter extends RequestIter {
     }
 }
 
-class GenericDownloadIter extends DirectDownloadIter {
+export class GenericDownloadIter extends DirectDownloadIter {
     async _loadNextChunk(): Promise<boolean | undefined> {
         // 1. Fetch enough for one chunk
         let data = Buffer.alloc(0);
@@ -281,7 +282,7 @@ class GenericDownloadIter extends DirectDownloadIter {
 }
 
 /** @hidden */
-function iterDownload(
+export function iterDownload(
     client: TelegramClient,
     {
         file,
@@ -854,6 +855,7 @@ export async function downloadProfilePhoto(
         return Buffer.alloc(0);
     }
     return client.downloadFile(loc, {
+        outputFile: fileParams.outputFile,
         dcId,
     });
 }
