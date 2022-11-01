@@ -1,4 +1,6 @@
-tsc
+rm -rf dist/
+mkdir dist/
+npx tsc
 cp package.json dist/
 cp README.md dist/
 cp LICENSE dist/
