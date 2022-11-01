@@ -182,6 +182,7 @@ export async function uploadFile(
                                 await sleep(err.seconds * 1000);
                                 continue;
                             }
+                            console.log("LIB ERROR", err, JSON.stringify(err));
                             throw err;
                         }
 
