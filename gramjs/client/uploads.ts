@@ -30,6 +30,8 @@ export interface UploadFileParams {
     workers: number;
     /** a progress callback for the upload. */
     onProgress?: OnProgress;
+
+    doNotLoadToMemory?: boolean;
 }
 
 /**
@@ -96,11 +98,12 @@ const DISCONNECT_SLEEP = 1000;
 
 async function getFileBuffer(
     file: File | CustomFile,
-    fileSize: number
+    fileSize: number,
+    doNotLoadInMemory: boolean = false
 ): Promise<CustomBuffer> {
     const isBiggerThan2Gb = fileSize > 2 ** 31 - 1;
     const options: CustomBufferOptions = {};
-    if (isBiggerThan2Gb && file instanceof CustomFile) {
+    if ((isBiggerThan2Gb || doNotLoadInMemory) && file instanceof CustomFile) {
         options.filePath = file.path;
     } else {
         options.buffer = Buffer.from(await fileToBuffer(file));
@@ -123,7 +126,7 @@ export async function uploadFile(
 
     const partSize = getAppropriatedPartSize(bigInt(size)) * KB_TO_BYTES;
     const partCount = Math.floor((size + partSize - 1) / partSize);
-    const buffer = await getFileBuffer(file, size);
+    const buffer = await getFileBuffer(file, size, fileParams.doNotLoadToMemory);
 
     // Make sure a new sender can be created before starting upload
     await client.getSender(client.session.dcId);
@@ -180,6 +183,9 @@ export async function uploadFile(
                                 continue;
                             } else if (err instanceof errors.FloodWaitError) {
                                 await sleep(err.seconds * 1000);
+                                continue;
+                            } else if ([500, 501].includes(err.code)) {
+                                await sleep(3000);
                                 continue;
                             }
                             console.log("LIB ERROR", err, JSON.stringify(err));
@@ -283,6 +289,8 @@ export interface SendFileInterface {
      If there is no linked chat, `SG_ID_INVALID` is thrown.
      */
     commentTo?: number | Api.Message;
+
+    doNotLoadToMemory?: boolean;
 }
 
 interface FileToMediaInterface {
@@ -298,6 +306,7 @@ interface FileToMediaInterface {
     mimeType?: string;
     asImage?: boolean;
     workers?: number;
+    doNotLoadToMemory?: boolean;
 }
 
 /** @hidden */
@@ -316,6 +325,7 @@ export async function _fileToMedia(
         mimeType,
         asImage,
         workers = 1,
+        doNotLoadToMemory
     }: FileToMediaInterface
 ): Promise<{
     fileHandle?: any;
@@ -407,6 +417,7 @@ export async function _fileToMedia(
             file: createdFile,
             onProgress: progressCallback,
             workers: workers,
+            doNotLoadToMemory,
         });
     } else {
         throw new Error(`"Not a valid path nor a url ${file}`);
@@ -509,6 +520,7 @@ export async function _sendAlbum(
         workers = 1,
         noforwards,
         commentTo,
+        doNotLoadToMemory,
     }: SendFileInterface
 ) {
     entity = await client.getInputEntity(entity);
@@ -548,6 +560,7 @@ export async function _sendAlbum(
             videoNote: videoNote,
             supportsStreaming: supportsStreaming,
             workers: workers,
+            doNotLoadToMemory,
         });
         if (
             media instanceof Api.InputMediaUploadedPhoto ||
@@ -626,6 +639,7 @@ export async function sendFile(
         workers = 1,
         noforwards,
         commentTo,
+        doNotLoadToMemory
     }: SendFileInterface
 ) {
     if (!file) {
@@ -681,6 +695,7 @@ export async function sendFile(
         videoNote: videoNote,
         supportsStreaming: supportsStreaming,
         workers: workers,
+        doNotLoadToMemory,
     });
     if (media == undefined) {
         throw new Error(`Cannot use ${file} as file.`);
