@@ -105,7 +105,10 @@ async function getFileBuffer(
     doNotLoadInMemory: boolean = false
 ): Promise<CustomBuffer> {
     const options: CustomBufferOptions = {};
-    if ((fileSize > maxBufferSize || doNotLoadInMemory) && file instanceof CustomFile) {
+    if (
+        (fileSize > maxBufferSize || doNotLoadInMemory) &&
+        file instanceof CustomFile
+    ) {
         options.filePath = file.path;
     } else {
         options.buffer = Buffer.from(await fileToBuffer(file));
@@ -298,6 +301,10 @@ export interface SendFileInterface {
     commentTo?: number | Api.Message;
 
     doNotLoadToMemory?: boolean;
+    /**
+     * Used for threads to reply to a specific thread
+     */
+    topMsgId?: number | Api.Message;
 }
 
 interface FileToMediaInterface {
@@ -332,7 +339,7 @@ export async function _fileToMedia(
         mimeType,
         asImage,
         workers = 1,
-        doNotLoadToMemory
+        doNotLoadToMemory,
     }: FileToMediaInterface
 ): Promise<{
     fileHandle?: any;
@@ -528,6 +535,7 @@ export async function _sendAlbum(
         noforwards,
         commentTo,
         doNotLoadToMemory,
+        topMsgId,
     }: SendFileInterface
 ) {
     entity = await client.getInputEntity(entity);
@@ -610,6 +618,7 @@ export async function _sendAlbum(
         new Api.messages.SendMultiMedia({
             peer: entity,
             replyToMsgId: replyTo,
+            topMsgId: utils.getMessageId(topMsgId),
             multiMedia: albumFiles,
             silent: silent,
             scheduleDate: scheduleDate,
@@ -646,7 +655,8 @@ export async function sendFile(
         workers = 1,
         noforwards,
         commentTo,
-        doNotLoadToMemory
+        doNotLoadToMemory,
+        topMsgId,
     }: SendFileInterface
 ) {
     if (!file) {
@@ -712,6 +722,7 @@ export async function sendFile(
         peer: entity,
         media: media,
         replyToMsgId: replyTo,
+        topMsgId: utils.getMessageId(topMsgId),
         message: caption,
         entities: msgEntities,
         replyMarkup: markup,
@@ -737,3 +748,4 @@ function fileToBuffer(file: File | CustomFile): Promise<Buffer> | Buffer {
         throw new Error("Could not create buffer from file " + file);
     }
 }
+
