@@ -82,6 +82,12 @@ fs.writeFileSync(
   JSON.stringify(packageJSON, null, "  "),
   "utf8"
 );
+fs.writeFileSync(
+  "gramjs/Version.ts",
+  `export const version = "${packageJSON.version}";`,
+  "utf8"
+);
+
 renameFiles("tempBrowser", "rename");
 
 const npmi = exec("npm i");
