@@ -78,8 +78,10 @@ class HTMLToTelegramParser implements Handler {
             }
             this._openTagsMeta.shift();
             this._openTagsMeta.unshift(url);
+        } else if (name == "tg-emoji") {
+            EntityType = Api.MessageEntityCustomEmoji;
+            args["documentId"] = attributes["emoji-id"];
         }
-
         if (EntityType && !this._buildingEntities.has(name)) {
             this._buildingEntities.set(
                 name,
@@ -223,7 +225,10 @@ export class HTMLParser {
                 html.push(
                     `<a href="tg://user?id=${entity.userId}">${entityText}</a>`
                 );
-            } else {
+            } else if (entity instanceof Api.MessageEntityCustomEmoji) {
+                html.push(`<tg-emoji emoji-id="${entity.documentId}">${entityText}</tg-emoji>`);
+            }
+            else {
                 skipEntity = true;
             }
             lastOffset = relativeOffset + (skipEntity ? 0 : length);
