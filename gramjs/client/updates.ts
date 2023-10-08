@@ -187,7 +187,8 @@ export async function _dispatchUpdate(
 export async function _updateLoop(client: TelegramClient) {
     let lastPongAt;
     while (!client._destroyed) {
-        await sleep(PING_INTERVAL);
+        await sleep(PING_INTERVAL, true);
+        if (client._destroyed) break;
         if (client._sender!.isReconnecting || client._isSwitchingDc) {
             lastPongAt = undefined;
             continue;
@@ -218,16 +219,14 @@ export async function _updateLoop(client: TelegramClient) {
                     PING_FAIL_INTERVAL
                 );
             } else {
-                let wakeUpWarningTimeout: Timeout | undefined | number = setTimeout(
-                    () => {
+                let wakeUpWarningTimeout: Timeout | undefined | number =
+                    setTimeout(() => {
                         _handleUpdate(
                             client,
                             UpdateConnectionState.disconnected
                         );
                         wakeUpWarningTimeout = undefined;
-                    },
-                    PING_WAKE_UP_WARNING_TIMEOUT
-                );
+                    }, PING_WAKE_UP_WARNING_TIMEOUT);
 
                 await timeout(ping, PING_WAKE_UP_TIMEOUT);
 

@@ -260,7 +260,7 @@ export interface SendFileInterface {
     /** Same as `replyTo` from {@link sendMessage}. */
     replyTo?: MessageIDLike;
     /** Optional attributes that override the inferred ones, like {@link Api.DocumentAttributeFilename} and so on.*/
-    attributes?: Api.TypeDocumentAttribute[];
+    attributes?: Api.TypeDocumentAttribute[] | Api.TypeDocumentAttribute[][];
     /** Optional JPEG thumbnail (for documents). Telegram will ignore this parameter unless you pass a .jpg file!<br/>
      * The file must also be small in dimensions and in disk size. Successful thumbnails were files below 20kB and 320x320px.<br/>
      *  Width/height and dimensions/size ratios may be important.
@@ -562,6 +562,11 @@ export async function _sendAlbum(
     } else {
         replyTo = utils.getMessageId(replyTo);
     }
+    if (!attributes) {
+        attributes = [];
+    }
+
+    let index = 0;
     const albumFiles = [];
     for (const file of files) {
         let { fileHandle, media, image } = await _fileToMedia(client, {
@@ -569,7 +574,8 @@ export async function _sendAlbum(
             forceDocument: forceDocument,
             fileSize: fileSize,
             progressCallback: progressCallback,
-            attributes: attributes,
+            // @ts-ignore
+            attributes: attributes[index],
             thumb: thumb,
             voiceNote: voiceNote,
             videoNote: videoNote,
@@ -577,6 +583,7 @@ export async function _sendAlbum(
             workers: workers,
             doNotLoadToMemory,
         });
+        index++;
         if (
             media instanceof Api.InputMediaUploadedPhoto ||
             media instanceof Api.InputMediaPhotoExternal
@@ -686,6 +693,7 @@ export async function sendFile(
             caption: caption,
             replyTo: replyTo,
             parseMode: parseMode,
+            attributes: attributes,
             silent: silent,
             scheduleDate: scheduleDate,
             supportsStreaming: supportsStreaming,
@@ -714,6 +722,7 @@ export async function sendFile(
         forceDocument: forceDocument,
         fileSize: fileSize,
         progressCallback: progressCallback,
+        // @ts-ignore
         attributes: attributes,
         thumb: thumb,
         voiceNote: voiceNote,
