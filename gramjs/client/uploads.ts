@@ -97,6 +97,7 @@ const LARGE_FILE_THRESHOLD = 10 * 1024 * 1024;
 const UPLOAD_TIMEOUT = 15 * 1000;
 const DISCONNECT_SLEEP = 1000;
 const BUFFER_SIZE_2GB = 2 ** 31;
+const BUFFER_SIZE_20MB = 20 * 1024 * 1024;
 
 async function getFileBuffer(
     file: File | CustomFile,
